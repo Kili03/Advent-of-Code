@@ -22,6 +22,10 @@ bool check(vector<int> line) {
         if ((line[i] < line[i + 1]) != increasing) {
             return false;
         }
+        int diff = abs(line[i] - line[i + 1]);
+        if (diff < 1 or diff > 3) {
+            return false;
+        }
     }
     cout << endl;
     return true;
@@ -50,6 +54,9 @@ int main()
         }
         if (check(numbers)) {
             count++;
+            cout << "valid" << endl;
+        } else {
+            cout << "invalid" << endl;
         }
         all++;
         lines.push_back(numbers);
