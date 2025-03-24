@@ -23,9 +23,17 @@ struct Timer {
 };
 
 int count_occ(const string &s, const string &o) {
-    int start_index = 0;
-    int o_i = s.find(o);
-    return 0;
+    int o_i = 0;
+    int occ = 0;
+    while (o_i != string::npos) {
+        o_i = s.find(o, o_i+4);
+        occ++;
+    }
+    return occ - 1;
+}
+
+int count_xmas(const string &text) {
+    return count_occ(text, "XMAS") + count_occ(text, "SAMX");
 }
 
 void code() {
@@ -44,6 +52,16 @@ void code() {
         grid.emplace_back(char_line);
     }
 
+    int count = 0;
+    // horizontal
+    for (vector<char> char_line : grid) {
+        string line = string(char_line.begin(), char_line.end());
+        count += count_xmas(line);
+    }
+
+    cout << count << endl;
+
+
 
 
 
@@ -51,9 +69,8 @@ void code() {
 
 int main() {
     Timer timer;
-    string s1 = "hai";
-    string s2 = "r";
-    cout << s1.find(s2, 0) << endl;
+    string text = "MMMMMMAMXMXSSMXAXAXAMASXMMMAXXXAMAMASXSXMASXAAXAAAAXMMMMXAMSXSAMASXMASAMXMMXSMMMSXMASXMAMMSSMXMAXAASMMSXSAXAXSSMAXAXMASXMXMAMMSMXMASMXSMMXMS";
+    cout << count_xmas(text) << endl;
     code();
 
     return 0;
