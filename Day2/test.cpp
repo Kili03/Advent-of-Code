@@ -8,10 +8,9 @@ bool check(vector<int> line) {
     if (line.size() == 1) {
         return true;
     }
-    bool increasing;
     int first = line.at(0);
     int second = line.at(1);
-    increasing = first < second;
+    bool increasing = first < second;
 
     // cout << "size: " << line.size() << " elements: ";
     for (int i = 0; i < line.size() - 1; i++) {
@@ -47,7 +46,7 @@ int main()
         stringstream lineStream(line);
 
         vector<int> numbers;
-        int number;
+        int number;test.cpp
         while (lineStream >> number) {
             numbers.push_back(number);
             // cout << number << " ";
