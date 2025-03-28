@@ -30,17 +30,15 @@ int count_occ(const string &s, const string &o) {
         occ++;
         o_i = s.find(o, o_i+1);
     }
-
     return occ;
 }
-
 
 int count_xmas(const string &text) {
     return count_occ(text, "XMAS") + count_occ(text, "SAMX");
 }
 
-void code() {
-    ifstream FileData("Advent-of-Code/Day4/data.txt");
+vector<vector<char>> get_grid(const string& filename) {
+    ifstream FileData(filename);
     if (!FileData.is_open()) {
         throw invalid_argument("Could not open file correctly");
     }
@@ -51,11 +49,16 @@ void code() {
     while (getline(FileData, file_line)) {
         grid.emplace_back(file_line.begin(), file_line.end());
     }
+    return grid;
+}
+
+void code() {
+    const vector<vector<char>> grid = get_grid("Advent-of-Code/Day4/data.txt");
 
     int count = 0;
 
     // horizontal
-    for (vector<char> char_line_it : grid) {
+    for (vector char_line_it : grid) {
         auto line = string(char_line_it.begin(), char_line_it.end());
         count += count_xmas(line);
     }
