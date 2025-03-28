@@ -27,13 +27,15 @@ struct Timer {
 int count_occ(const string &s, const string &o) {
     int o_i = 0;
     int occ = 0;
+    o_i = s.find(o, 0);
     while (o_i != string::npos) {
-        o_i = s.find(o, o_i+4);
         occ++;
+        o_i = s.find(o, o_i+1);
     }
 
-    return occ - 1;
+    return occ;
 }
+
 
 int count_xmas(const string &text) {
     return count_occ(text, "XMAS") + count_occ(text, "SAMX");
@@ -48,14 +50,8 @@ void code() {
     vector<vector<char>> grid;
     grid.reserve(140);
     string file_line;
-    vector<char> char_line;
-    char_line.reserve(140);
     while (getline(FileData, file_line)) {
-        for (char c: file_line) {
-            char_line.emplace_back(c);
-        }
-        grid.emplace_back(char_line);
-        char_line.clear();
+        grid.emplace_back(file_line.begin(), file_line.end());
     }
 
     int count = 0;
@@ -66,53 +62,40 @@ void code() {
     }
 
     //vertical
-    for (int i=0; i<grid[0].size(); i++) {
+    for (int i=0; i<SIZE; i++) {
         string line;
-        for (int j=0; j<grid.size(); j++) {
-            // cout << grid[j][i] << endl;
+        for (int j=0; j<SIZE; j++) {
             line += grid[j][i];
         }
-        cout << line << endl;
         count += count_xmas(line);
     }
 
-    //top-to-right-diagonal
+    //top-left-to-bottom-right-diagonal
     for (int i=0; i<SIZE; i++) {
-        string line, line2;
-        for (int j=0; i+j<SIZE; j++) {
-            line += grid[0+j][i+j];
-            line2 += grid[i+j][0+j];
+        string line, line2, line3, line4;
+        for (int j=0; j<SIZE-i; j++) {
+            line += grid[j][i+j];
+            line2 += grid[i+j][j];
+
+            line3 += grid[j][SIZE-1-j-i];
+            line4 += grid[j+i][SIZE-1-j];
         }
-        cout << line << endl;
         count += count_xmas(line);
-        cout << line2 << endl;
-        count += count_xmas(line2);
+        count += count_xmas(line3);
+        if (i > 0) {
+            count += count_xmas(line2);
+            count += count_xmas(line4);
+        }
     }
 
-    for (int i=SIZE-1; i>=0; i--) {
-        string line, line2;
-        for (int j=SIZE-1; j>=0; j--) {
-            line += grid[j][j-1];
-            line2 += grid[j-1][j];
-        }
-        cout << line << endl;
-        count += count_xmas(line);
-        cout << line2 << endl;
-        count += count_xmas(line2);
-    }
-
-
-
-
-
-    cout << count << endl;
+    // cout << count << endl;
 
 }
 
 int main() {
     Timer timer;
 
-    for (int i=0; i < 1; i++) {
+    for (int i=0; i < 100; i++) {
         code();
     }
 
