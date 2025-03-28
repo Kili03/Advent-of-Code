@@ -1,6 +1,5 @@
 #include <fstream>
 #include <iostream>
-#include <sstream>
 #include <vector>
 #include <chrono>
 #include <string>
@@ -12,20 +11,19 @@ constexpr int SIZE = 140;
 
 struct Timer {
     chrono::time_point<chrono::system_clock> start, end;
-    chrono::duration<double> duration;
 
     Timer() {
         start = chrono::high_resolution_clock::now();
     }
     ~Timer() {
         end = chrono::high_resolution_clock::now();
-        duration = end-start;
+        const chrono::duration<double> duration = end-start;
         cout << "Time: " << duration.count() << endl;
     }
 };
 
 int count_occ(const string &s, const string &o) {
-    int o_i = 0;
+    size_t o_i = 0;
     int occ = 0;
     o_i = s.find(o, 0);
     while (o_i != string::npos) {
@@ -55,9 +53,10 @@ void code() {
     }
 
     int count = 0;
+
     // horizontal
     for (vector<char> char_line_it : grid) {
-        string line = string(char_line_it.begin(), char_line_it.end());
+        auto line = string(char_line_it.begin(), char_line_it.end());
         count += count_xmas(line);
     }
 
@@ -70,7 +69,7 @@ void code() {
         count += count_xmas(line);
     }
 
-    //top-left-to-bottom-right-diagonal
+    // diagonal
     for (int i=0; i<SIZE; i++) {
         string line, line2, line3, line4;
         for (int j=0; j<SIZE-i; j++) {
@@ -88,14 +87,14 @@ void code() {
         }
     }
 
-    // cout << count << endl;
+    cout << count << endl;
 
 }
 
 int main() {
     Timer timer;
 
-    for (int i=0; i < 100; i++) {
+    for (int i=0; i < 1; i++) {
         code();
     }
 
