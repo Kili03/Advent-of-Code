@@ -8,6 +8,11 @@
 
 using namespace std;
 
+enum cell_type {
+    WALL,
+    EMPTY,
+    START
+};
 
 struct Vec2d {
     int d_row, d_column;
@@ -21,7 +26,7 @@ struct Position {
     int row, column;
 
     [[nodiscard]] bool is_on_edge(const vector<vector<char>>& grid) const {
-        return row <= 0 || column <= 0 || row >= grid.size() - 1 || column >= grid[0].size() - 1;
+        return row == 0 || column == 0 || row == 130 - 1 || column == 130 - 1;
     }
 
     Position operator+(const Vec2d& vec) const {
@@ -43,7 +48,8 @@ struct Position {
 
 struct PositionHash {
     size_t operator()(const Position& pos) const {
-        return hash<string>()(pos.toString());
+        // Use bit shifting to create a hash without string conversion
+        return (static_cast<size_t>(pos.row) << 32) | static_cast<size_t>(pos.column);
     }
 };
 
