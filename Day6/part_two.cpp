@@ -9,6 +9,7 @@
 using namespace std;
 
 enum cell_type {
+    OBSTACLE,
     WALL,
     EMPTY,
     START
@@ -24,10 +25,6 @@ struct Vec2d {
 
 struct Position {
     int row, column;
-
-    [[nodiscard]] bool is_on_edge(const vector<vector<char>>& grid) const {
-        return row == 0 || column == 0 || row == 130 - 1 || column == 130 - 1;
-    }
 
     Position operator+(const Vec2d& vec) const {
          return {row + vec.d_row, column + vec.d_column};
@@ -54,7 +51,7 @@ struct PositionHash {
 };
 
 struct Grid {
-    vector<vector<char>> grid;
+    vector<vector<cell_type>> grid;
     Position current_position;
     // unordered_map<Position, vector<Vec2d>, PositionHash> direction_dict{};
     int direction_index = 0;
@@ -62,15 +59,15 @@ struct Grid {
     unordered_set<Position, PositionHash> loop_obstacles;
     unordered_set<Position, PositionHash> checked_positions;
 
-    Grid(const vector<vector<char>>& grid_vec, const Position& start_pos)
+    Grid(const vector<vector<cell_type>>& grid_vec, const Position& start_pos)
         : grid(grid_vec), current_position(start_pos) {
     }
 
-    [[nodiscard]] char get_char(const Position& pos) const {
+    [[nodiscard]] cell_type get_char(const Position& pos) const {
         return grid[pos.row][pos.column];
     }
 
-    void set_char(const Position& pos, const char& new_char) {
+    void set_char(const Position& pos, const cell_type& new_char) {
         grid[pos.row][pos.column] = new_char;
     }
 
@@ -80,7 +77,7 @@ struct Grid {
         Position test_pos = start_pos;
         int direction_test_index = start_dir;
 
-        while (!test_pos.is_on_edge(grid)) {
+        while (get_char(test_pos) != WALL) {
             string pos_dir_key = test_pos.toString() + ":" + to_string(direction_test_index);
             if (visited.contains(pos_dir_key)) {
                 return true;
@@ -89,7 +86,7 @@ struct Grid {
 
             Position next_pos = test_pos + directions[direction_test_index];
 
-            if (get_char(next_pos) == '#') {
+            if (get_char(next_pos) == OBSTACLE) {
                 direction_test_index = (direction_test_index + 1) % 4;
             } else {
                 test_pos = next_pos;
@@ -101,12 +98,12 @@ struct Grid {
 
     void move() {
         Position next_pos = current_position + directions[direction_index];
-        if (get_char(next_pos) == '#') {
+        if (get_char(next_pos) == OBSTACLE) {
             direction_index = (direction_index + 1) % 4;
             return;
         }
 
-        if (next_pos.is_on_edge(grid)) {
+        if (get_char(next_pos) == WALL) {
             current_position = next_pos;
             return;
         }
@@ -114,12 +111,12 @@ struct Grid {
         // Only check positions we haven't checked before
         if (!loop_obstacles.contains(next_pos) && !checked_positions.contains(next_pos)) {
             // Temporarily mark this position as an obstacle
-            const char old_char = get_char(next_pos);
+            const cell_type old_char = get_char(next_pos);
             if (old_char == '^') {
                 current_position = next_pos;
                 return;
             }
-            set_char(next_pos, '#');
+            set_char(next_pos, OBSTACLE);
 
             // Start the loop check from the starting position with the original direction
             checked_positions.emplace(next_pos);
@@ -140,22 +137,47 @@ Grid build_grid(const string& path) {
         throw invalid_argument("Couldn't open file correctly");
     }
 
-    vector<vector<char>> grid;
-    grid.reserve(130);
+    vector<vector<cell_type>> grid;
+    grid.reserve(132); // 130 + 2 for the border
+
     string line;
     Position final_start_pos{};
     int row = 0;
+
+    // Add top border
+    grid.emplace_back(132, WALL);
+
     while (getline(File, line)) {
-        grid.emplace_back(line.begin(), line.end());
+        vector<cell_type> grid_row;
+        grid_row.reserve(132);
+        grid_row.push_back(WALL); // Left border
+
         int column = 0;
         for (const char c: line) {
-            if (c == '^') {
-                final_start_pos = Position(row, column);
+            switch (c) {
+                case '#':
+                    grid_row.push_back(OBSTACLE);
+                break;
+                case '.':
+                    grid_row.push_back(EMPTY);
+                break;
+                case '^':
+                    grid_row.push_back(START);
+                final_start_pos = Position(row + 1, column + 1); // Adjust for border
+                break;
+                default:
+                    throw invalid_argument("Invalid character in grid");
             }
             column++;
         }
+
+        grid_row.push_back(WALL); // Right border
+        grid.emplace_back(grid_row);
         row++;
     }
+
+    // Add bottom border
+    grid.emplace_back(132, WALL);
 
     // cout << "Start Pos: " << final_pos.row << "," << final_pos.column << endl;
     return {grid, final_start_pos};
@@ -165,7 +187,7 @@ Grid build_grid(const string& path) {
 int code() {
     Grid grid = build_grid("Advent-of-Code/Day6/data.txt");
 
-    while (!grid.current_position.is_on_edge(grid.grid)) {
+    while (grid.get_char(grid.current_position) != WALL) {
         grid.move();
     }
 
