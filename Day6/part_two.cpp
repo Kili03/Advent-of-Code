@@ -9,15 +9,10 @@
 using namespace std;
 
 
-template <typename T>
-bool contains(const vector<T>& vec, const T& element) {
-    return find(vec.begin(), vec.end(), element) != vec.end();
-}
-
 struct Vec2d {
     int d_row, d_column;
 
-    bool operator==(const Vec2d &other) const {
+    bool operator==(const Vec2d& other) const {
         return d_row == other.d_row && d_column == other.d_column;
     }
 };
@@ -55,10 +50,11 @@ struct PositionHash {
 struct Grid {
     vector<vector<char>> grid;
     Position current_position;
-    unordered_map<Position, vector<Vec2d>, PositionHash> direction_dict{};
+    // unordered_map<Position, vector<Vec2d>, PositionHash> direction_dict{};
     int direction_index = 0;
     constexpr static Vec2d directions[4] = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
     unordered_set<Position, PositionHash> loop_obstacles;
+    unordered_set<Position, PositionHash> checked_positions;
 
     Grid(const vector<vector<char>>& grid_vec, const Position& start_pos)
         : grid(grid_vec), current_position(start_pos) {
@@ -72,28 +68,25 @@ struct Grid {
         grid[pos.row][pos.column] = new_char;
     }
 
-    bool find_loop() const {
-        unordered_map<Position, vector<Vec2d>, PositionHash> direction_test_dict;
-        direction_test_dict[current_position].emplace_back(directions[direction_index]);
+    bool find_loop(const Position& start_pos, const int& start_dir) const {
+        unordered_set<string> visited;
 
-        if (get_char(current_position + directions[direction_index]) == '^') {
-            return false;
-        }
+        Position test_pos = start_pos;
+        int direction_test_index = start_dir;
 
-        Position next_test_pos = current_position;
-        int direction_test_index = (direction_index + 1) % 4;
-
-        while (!next_test_pos.is_on_edge(grid)) {
-            if (contains(direction_test_dict[next_test_pos], directions[direction_test_index])) {
-                // cout << "Found loop after " << checked_positions << " positions" << endl;
+        while (!test_pos.is_on_edge(grid)) {
+            string pos_dir_key = test_pos.toString() + ":" + to_string(direction_test_index);
+            if (visited.contains(pos_dir_key)) {
                 return true;
             }
-            direction_test_dict[next_test_pos].emplace_back(directions[direction_test_index]);
+            visited.insert(pos_dir_key);
 
-            if (get_char(next_test_pos + directions[direction_test_index]) == '#') {
+            Position next_pos = test_pos + directions[direction_test_index];
+
+            if (get_char(next_pos) == '#') {
                 direction_test_index = (direction_test_index + 1) % 4;
             } else {
-                next_test_pos = next_test_pos + directions[direction_test_index];
+                test_pos = next_pos;
             }
 
         }
@@ -104,21 +97,34 @@ struct Grid {
         Position next_pos = current_position + directions[direction_index];
         if (get_char(next_pos) == '#') {
             direction_index = (direction_index + 1) % 4;
-            // next_pos = current_position + directions[direction_index];
-        } else {
-            current_position = next_pos;
-        }
-
-        if (current_position.is_on_edge(grid)) {
             return;
         }
-        // direction_dict[current_position].emplace_back(directions[direction_index]);
 
-        if (find_loop()) {
-            if (!loop_obstacles.contains(current_position + directions[direction_index])) {
-                loop_obstacles.emplace(current_position + directions[direction_index]);
-            }
+        if (next_pos.is_on_edge(grid)) {
+            current_position = next_pos;
+            return;
         }
+
+        // Only check positions we haven't checked before
+        if (!loop_obstacles.contains(next_pos) && !checked_positions.contains(next_pos)) {
+            // Temporarily mark this position as an obstacle
+            const char old_char = get_char(next_pos);
+            if (old_char == '^') {
+                current_position = next_pos;
+                return;
+            }
+            set_char(next_pos, '#');
+
+            // Start the loop check from the starting position with the original direction
+            checked_positions.emplace(next_pos);
+            if (find_loop(current_position, direction_index)) {
+                loop_obstacles.emplace(next_pos);
+            }
+
+            // Restore the original character
+            set_char(next_pos, old_char);
+        }
+        current_position = next_pos;
     }
 };
 
@@ -163,6 +169,7 @@ int code() {
 
 int main() {
     Timer timer;
+
     for (int i=0; i<1; i++) {
         cout << code() << endl;
         // code();
